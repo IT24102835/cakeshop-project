@@ -1,0 +1,87 @@
+package com.userMgr.servlets;
+
+import java.io.FileWriter;
+
+import java.io.IOException;
+import javax.servlet.ServletException;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.userMgr.model.Users;
+import com.userMgr.services.UserValidator;
+
+public class UserServlet extends HttpServlet {
+    private static final long serialVersionUID = 1L;
+    private static final String FILE_PATH = "C:\\Users\\USER\\Desktop\\project\\cakeShop\\src\\main\\webapp\\WEB-INF\\users.txt";
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        try {
+            String username = request.getParameter("name");
+            String password = request.getParameter("password");
+            String email = request.getParameter("email");
+            
+            // Create validator to check for duplicate values
+            UserValidator validator = new UserValidator();
+            
+            // Check for duplicate userName
+            if (validator.isDuplicateUsername(username)) {
+                request.setAttribute("errorMessage", "Username already exists! Please choose a different username.");
+            	request.getRequestDispatcher("register.jsp").forward(request, response);
+            	//response.sendRedirect("customer-signup.jsp?type=error&message=" + java.net.URLEncoder.encode("Username already exists! Please choose a different username.", "UTF-8"));
+                return;
+            }
+            
+            // Check for duplicate email
+            if (validator.isDuplicateEmail(email)) {
+                request.setAttribute("errorMessage", "Email already exists! Please use a different email address.");
+                request.getRequestDispatcher("register.jsp").forward(request, response);
+                //response.sendRedirect("customer-signup.jsp?error=username&message=" + java.net.URLEncoder.encode("Email already exists! Please choose a different email.", "UTF-8"));
+                return;
+            }
+            
+            
+            
+         // Validate email format
+            if (!isValidEmail(email)) {
+                request.setAttribute("errorMessage", "Invalid email format! Please enter a valid email address.");
+                request.getRequestDispatcher("register.jsp").forward(request, response);
+                //response.sendRedirect("customer-signup.jsp?type=error&message=" + java.net.URLEncoder.encode("Invalid email format! Please enter a valid email address.", "UTF-8"));
+                return;
+            }
+
+            
+            // All validations passed, create Users
+            Users Users = new Users(username, email, password);
+            
+            try (FileWriter writer = new FileWriter(FILE_PATH, true)) {
+                writer.write(Users.toString() + System.lineSeparator());
+            }
+            
+            // Redirect to success page
+            response.sendRedirect("login.jsp");
+        } catch (Exception e) {
+            // Forward to error page with error message
+           request.setAttribute("errorMessage", "Registration failed: " + e.getMessage());
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+           // response.sendRedirect("customer-signup.jsp?type=error&message=" + java.net.URLEncoder.encode("Phone number already exists! Please choose a different phone number.", "UTF-8"));
+        }
+    }
+
+    private boolean isValidEmail(String email) {
+        if (email == null || email.trim().isEmpty()) {
+            return false;
+        }
+
+        // Check for @ symbol and proper domain format
+        int atIndex = email.indexOf('@');
+        if (atIndex == -1 || atIndex == 0 || atIndex == email.length() - 1) {
+            return false;
+        }
+
+        // Check for domain with at least one dot
+        String domain = email.substring(atIndex + 1);
+        return domain.contains(".") && domain.indexOf(".") < domain.length() - 1;
+    }
+}
