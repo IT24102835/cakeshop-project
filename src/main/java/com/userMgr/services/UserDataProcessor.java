@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import com.userMgr.model.Users;
+import com.userMgr.models.User;
 
 public class UserDataProcessor {
     private static final String FILE_PATH = "C:\\Users\\USER\\Desktop\\project\\cakeShop\\src\\main\\webapp\\WEB-INF\\users.txt";
@@ -17,10 +17,9 @@ public class UserDataProcessor {
      * @param password user's password
      * @return User object if authenticated, null otherwise
      */
-    public Users authenticateUser(String userIdentifier, String password) {
-        Queue<Users> userQueue = loadUsersIntoQueue();
-        Users user = bubbleSearchUser(userQueue, userIdentifier, password);
-        System.out.println("User: " + userQueue);
+    public User authenticateUser(String userIdentifier, String password) {
+        Queue<User> userQueue = loadUsersIntoQueue();
+        User user = bubbleSearchUser(userQueue, userIdentifier, password);
         return user;
     }
     
@@ -28,28 +27,26 @@ public class UserDataProcessor {
      * Loads all users from users.txt into a queue
      * @return Queue of User objects
      */
-    private Queue<Users> loadUsersIntoQueue() {
-        Queue<Users> queue = new LinkedList<>();
+    private Queue<User> loadUsersIntoQueue() {
+        Queue<User> queue = new LinkedList<>();
         
         try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(", ");
-                
-                System.out.println("Line: " + line);
-                if (parts.length >= 3) {
-                	
-                    String username = parts[0];
-                    String email = parts[1];
+                if (parts.length >= 7) {
+                	String fullName = parts[0];
+                    String username = parts[1];
                     String pwd = parts[2];
-                   
+                    String email = parts[3];
+                    String gender = parts[4];
+                    String address = parts[5];
+                    String phone = parts[6];
                     
-                    Users user = new Users(username, email, pwd);
+                    User user = new User(fullName, username, pwd, email, gender, address, phone);
                     queue.add(user);
                 }
             }
-            System.out.println("Queue: " + queue);
-            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -66,21 +63,19 @@ public class UserDataProcessor {
      * @return User object if found and authenticated, null otherwise
      */
 
-private Users bubbleSearchUser(Queue<Users> userQueue, String userIdentifier, String password) {
+private User bubbleSearchUser(Queue<User> userQueue, String userIdentifier, String password) {
     int size = userQueue.size();
-    
-    System.out.println("Size: " + size);
-    Users[] users = new Users[size];
+    User[] users = new User[size];
 
     // Convert queue to array and preserve queue contents
     for (int i = 0; i < size; i++) {
-        Users user = userQueue.remove();
+        User user = userQueue.remove();
         users[i] = user;
         userQueue.add(user); // Add back to queue
     }
 
     // Simple linear search is more appropriate for finding a user
-    for (Users user : users) {
+    for (User user : users) {
         if (isMatchingUser(user, userIdentifier, password)) {
             return user;
         }
@@ -99,9 +94,9 @@ private Users bubbleSearchUser(Queue<Users> userQueue, String userIdentifier, St
      * @param password user's password
      * @return true if matching, false otherwise
      */
-    private boolean isMatchingUser(Users user, String userIdentifier, String password) {
+    private boolean isMatchingUser(User user, String userIdentifier, String password) {
     	
-        return (user.getUserName().equals(userIdentifier) || 
+        return (user.getUsername().equals(userIdentifier) || 
                 user.getEmail().equals(userIdentifier)) && 
                user.getPassword().equals(password);
     }
